@@ -1,0 +1,25 @@
+#batch-dialog { width: min(850px, calc(100% - 30px)); }
+.batch-help { color: var(--muted); font-size: 14px; margin: 16px 0; }
+.batch-help a { color: var(--accent); text-decoration: underline; }
+.batch-item { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 24px 0; border-top: 1px solid var(--line); }
+.batch-thumbnail img, .batch-thumbnail video { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; background: #0c0e0b; }
+.batch-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.batch-heading h3 { margin: 0; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+.batch-size { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.batch-content label { margin: 12px 0; }
+.batch-content input, .batch-content textarea { padding: 8px 12px; }
+.batch-content button { font-size: 14px; padding: 6px 12px; }
+.batch-state { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.batch-item[data-state=published] .batch-state { color: var(--accent); }
+.batch-item[data-state=failed] .batch-state, .batch-item[data-state=uncertain] .batch-state { color: #ffb6ae; }
+.batch-item[data-state=uploading] .batch-state { color: var(--accent); }
+#batch-progress-wrap { margin-top: 18px; }
+#batch-progress { width: 100%; height: 12px; accent-color: var(--accent); }
+#batch-summary { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.batch-actions { position: sticky; bottom: -28px; background: var(--panel); padding: 18px 0 4px; border-top: 1px solid var(--line); }
+@media(max-width: 540px) {
+  .batch-item { grid-template-columns: minmax(0,1fr); gap: 12px; }
+  .batch-thumbnail { width: 100px; }
+  .batch-actions { bottom: -20px; flex-wrap: wrap; }
+  .batch-heading { align-items: start; }
+}
