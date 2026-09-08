@@ -1,4 +1,6 @@
 import './style.css';
+import { createClient } from '@supabase/supabase-js';
+import { submitEnquiry } from './enquiries.js';
 
 const path = location.pathname.replace(/\/$/, '') || '/';
 
@@ -30,7 +32,7 @@ if (['/', '/admin', '/portfolio'].includes(path)) {
     },
     '/contact': {
       label: 'Contact Frame Studio', title: 'Tell us about<br><em>your celebration.</em>', image: 'wedding-hero.png',
-      body: `<section class="contact-page"><div><p class="section-number">START A CONVERSATION</p><h2>We would love to hear your plans.</h2><p>Share your date, location, events, and the kind of coverage you are looking for. We will reply with availability and the next steps.</p><div class="contact-details"><a href="tel:+918790042094">+91 87900 42094</a><a href="mailto:sivaganesh152002@gmail.com">sivaganesh152002@gmail.com</a><a href="https://wa.me/918790042094" target="_blank" rel="noopener">WhatsApp us →</a></div></div><form class="enquiry-form" action="mailto:sivaganesh152002@gmail.com" method="post" enctype="text/plain"><label>Your name<input name="name" required></label><label>Email<input type="email" name="email" required></label><label>Phone<input type="tel" name="phone"></label><label>Event date<input type="date" name="date"></label><label>Event location<input name="location"></label><label>Tell us about your celebration<textarea name="message" rows="5" required></textarea></label><button class="primary" type="submit">Send enquiry →</button></form></section>`
+      body: `<section class="contact-page"><div><p class="section-number">START A CONVERSATION</p><h2>We would love to hear your plans.</h2><p>Share your date, location, events, and the kind of coverage you are looking for. We will reply with availability and the next steps.</p><div class="contact-details"><a href="tel:+918790042094">+91 87900 42094</a><a href="mailto:sivaganesh152002@gmail.com">sivaganesh152002@gmail.com</a><a href="https://wa.me/918790042094" target="_blank" rel="noopener">WhatsApp us →</a></div></div><form class="enquiry-form"><label>Your name<input name="name" maxlength="100" required></label><label>Email<input type="email" name="email" maxlength="254" required></label><label>Phone<input type="tel" name="phone" maxlength="30"></label><label>Event date<input type="date" name="event_date"></label><label>Event location<input name="event_location" maxlength="150"></label><label>Tell us about your celebration<textarea name="message" rows="5" minlength="5" maxlength="2000" required></textarea></label><p class="enquiry-status" role="status" aria-live="polite"></p><button class="primary" type="submit">Send enquiry →</button></form></section>`
     }
   };
 
@@ -43,11 +45,30 @@ if (['/', '/admin', '/portfolio'].includes(path)) {
   const toggle = document.querySelector('.menu-toggle');
   toggle.onclick = () => { const open = document.querySelector('header').classList.toggle('menu-open'); toggle.setAttribute('aria-expanded', String(open)); };
   const form = document.querySelector('.enquiry-form');
-  if (form) form.onsubmit = event => {
+  if (form) form.onsubmit = async event => {
     event.preventDefault();
+    const button = form.querySelector('button[type="submit"]');
+    const status = form.querySelector('.enquiry-status');
     const data = new FormData(form);
-    const subject = encodeURIComponent(`Wedding enquiry from ${data.get('name')}`);
-    const body = encodeURIComponent(`Name: ${data.get('name')}\nEmail: ${data.get('email')}\nPhone: ${data.get('phone')}\nEvent date: ${data.get('date')}\nLocation: ${data.get('location')}\n\n${data.get('message')}`);
-    location.href = `mailto:sivaganesh152002@gmail.com?subject=${subject}&body=${body}`;
+    status.className = 'enquiry-status';
+    status.textContent = '';
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (!url || !key) throw Error('Website connection is not configured.');
+      const client = createClient(url, key);
+      await submitEnquiry(client, Object.fromEntries(data));
+      form.reset();
+      status.classList.add('success');
+      status.textContent = 'Thank you. Your enquiry has been received. We will contact you soon.';
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = error.message || 'We could not send your enquiry. Please try again.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Send enquiry →';
+    }
   };
 }
