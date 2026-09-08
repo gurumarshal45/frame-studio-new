@@ -3,6 +3,7 @@ import './batch.css';
 import { createClient } from '@supabase/supabase-js';
 import { createPortfolio } from './portfolio.js';
 import { MAX_BATCH_FILES, createBatchItem, canPublish, publishBatch } from './batch.js';
+import { listLeads } from './leads.js';
 
 const $ = selector => document.querySelector(selector);
 const isAdmin = location.pathname.replace(/\/$/, '') === '/admin';
@@ -42,6 +43,7 @@ function view() {
   $('#logout').hidden = !logged;
   $('#admin-link').textContent = logged ? 'Manage portfolio ↗' : 'Admin sign in ↗';
   $('#add').hidden = $('#empty-add').hidden = !(logged && isAdmin);
+  $('#view-leads').hidden = !(logged && isAdmin);
   $('#work-title').firstChild.textContent = isAdmin ? 'Your work' : 'Love, in every frame';
   $('#work-kicker').textContent = isAdmin ? 'STUDIO DASHBOARD' : '02 / SELECTED STORIES';
   render();
@@ -98,6 +100,33 @@ function setBusy(value) {
 }
 $('#close-detail').onclick = () => $('#detail').close();
 $('#detail').addEventListener('close', () => $('#detail-content').replaceChildren());
+$('#close-leads').onclick = () => $('#leads-dialog').close();
+$('#view-leads').onclick = async () => {
+  const dialog = $('#leads-dialog');
+  const status = $('#leads-status');
+  const list = $('#leads-list');
+  list.replaceChildren();
+  status.textContent = 'Loading leads…';
+  dialog.showModal();
+  try {
+    const leads = await listLeads(client, portfolio.requireAdmin);
+    status.textContent = leads.length ? `${leads.length} ${leads.length === 1 ? 'lead' : 'leads'} · newest first` : 'No enquiries have been received yet.';
+    for (const lead of leads) {
+      const card = el('article', null, 'lead-card');
+      const head = el('div', null, 'lead-head');
+      head.append(el('h3', lead.name), el('span', lead.status || 'new', 'lead-status'));
+      const details = el('div', null, 'lead-details');
+      const email = el('a', lead.email); email.href = `mailto:${lead.email}`;
+      const phone = el('a', lead.phone || 'No phone');
+      if (lead.phone) phone.href = `tel:${lead.phone.replace(/[^+\d]/g, '')}`;
+      details.append(email, phone, el('span', lead.event_date ? new Date(`${lead.event_date}T00:00:00`).toLocaleDateString() : 'Date not provided'), el('span', lead.event_location || 'Location not provided'));
+      card.append(head, details, el('p', lead.message, 'lead-message'), el('time', `Received ${new Date(lead.created_at).toLocaleString()}`, 'lead-time'));
+      list.append(card);
+    }
+  } catch (error) {
+    status.textContent = errorMessage(error);
+  }
+};
 $('#add').onclick = $('#empty-add').onclick = () => {
   batchItems = [];
   $('#batch-files').value = '';
